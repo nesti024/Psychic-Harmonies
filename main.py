@@ -293,18 +293,9 @@ port = mido.open_output("loopMIDI Port 1")
 # getNoteChangingSpeed()
 #getNoteOneOctave(1, 3)
 
-#getScale()
-
-accelStream = initStream('Accelerometer')
+getScale()
 
 #0.27  Z
 #-0.07 X
 #0.94 Y
 
-while True:
-    getAccelData()
-    print(medianAccelData[-1])
-    #print(0.27-medianAccelData[-1][0])
-    #print(-0.07 - medianAccelData[-1][1])
-    #print(0.94 - medianAccelData[-1][2])
-    #time.sleep(1)
