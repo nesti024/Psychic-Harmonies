@@ -1,5 +1,8 @@
-# Einfachste standardmethode. Spielt einen Ton Alle "sleep" Sekunden -> Spielbare Töne: 0-127, alle Werte > 127 = 127 und unter 0 *-1 -> Wenig Bandbreite der Daten genutzt.
-# FUnktioniert ganz gut mit Keys oder Streichinstrumenten o.ä.
+#Aussortierte Modi, diese Datei ist aufgrund von Änderungen in der main nicht lauffähig.
+
+
+# Einfachste Methode. Spielt einen Ton Alle "sleep" Sekunden -> Spielbare Töne: 0-127, alle Werte > 127 = 127 und < 0 = *-1 -> Wenig Bandbreite der Daten genutzt.
+# Funktioniert ganz gut mit Keys oder Streichinstrumenten.
 def getNoteSmallSpec(sleep):
     while True:
         getEEGData()
@@ -17,6 +20,7 @@ def getNoteSmallSpec(sleep):
         time.sleep(sleep)
 
 
+#Spielt Noten aus einer Oktave. If-else könnte wie in der main durch loops ersetzt werden, dafür fehlte aber die Zeit.
 def getNoteOneOctave(sleep, octave):
     lastPlayed = -1
     while True:
@@ -112,6 +116,8 @@ def getChordSmallSpec(sleep):
         time.sleep(sleep)
 
 
+# Spielt in einer Moll Tonleiter so lange neue Töne bis 3 gleichzeitig laufen, dann wird der älteste Ton ausgelassen.
+# Funktioniert mit Gyroskop.
 def getScaleOctavesChords():
     global aktuelleNote
     while (True):
@@ -187,81 +193,55 @@ def getScaleOctavesChords():
 
         # time.sleep(sleep)
 
-def getScaleOctaves(gyro):
-    velocity = 64
+# Wurde genutzt um ein Sample im Ableton Simpler in 5 Stücke aufzuteilen und diese Stücke spielen zu können.
+# Funktioniert mit Gyroskop.
+def abraxas(inletEEG, inletGYR, port):
     aktuelleNote = 0
-    gehalteneNote = 0
+    medianEEGData = []
+    gyroData = []
+    notes = []
     while (True):
-        getEEGData()
+        medianEEGData.append(getData(inletEEG, Type.EEG))
+
         medianEEGData[-1] = medianEEGData[-1] + 1000
-        getGyroData()
 
-        if aktuelleNote != 0:
-            msg = mido.Message('note_off', note=aktuelleNote)
-            port.send(msg)
+        gyroData.append(getData(inletGYR, Type.GYRO))
 
-        if(gyro==True):
-            if (gyroData[-1][0] < 1):
-                velocity = 64
-            elif gyroData[-1][0] > 3:
-                velocity = 127
+        velocity = 64
+        if (gyroData[-1][0] < 1):
+            velocity = 64
+        elif gyroData[-1][0] > 3:
+            velocity = 127
 
-
-        if(velocity>127):
-            velocity=127
-        elif(velocity<0):
-            velocity=0
-
-
-        # Start 900 range 200
-        start = 990
-        steps = 14
-        range = 110
+        start = 1000
+        steps = 5
+        range = 50
         steps = range / steps
 
         if (medianEEGData[-1] <= start + steps):
-            aktuelleNote = 62 - 12
+            aktuelleNote = 24 + 12
+            msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
         elif (medianEEGData[-1] <= start + steps * 2):
-            aktuelleNote = 64 - 12
+            aktuelleNote = 25 + 12
+            msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
         elif (medianEEGData[-1] <= start + steps * 3):
-            aktuelleNote = 65 - 12
+            aktuelleNote = 26 + 12
+            msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
         elif (medianEEGData[-1] <= start + steps * 4):
-            aktuelleNote = 67 - 12
-        elif (medianEEGData[-1] <= start + steps * 5):
-            aktuelleNote = 69 - 12
-        elif (medianEEGData[-1] <= start + steps * 6):
-            aktuelleNote = 70 - 12
-        elif (medianEEGData[-1] <= start + steps * 7):
-            aktuelleNote = 72 - 12
-        elif (medianEEGData[-1] <= start + steps * 8):
-            aktuelleNote = 62
-        elif (medianEEGData[-1] <= start + steps * 9):
-            aktuelleNote = 64
-        elif (medianEEGData[-1] <= start + steps * 10):
-            aktuelleNote = 65
-        elif (medianEEGData[-1] <= start + steps * 11):
-            aktuelleNote = 67
-        elif (medianEEGData[-1] <= start + steps * 12):
-            aktuelleNote = 69
-        elif (medianEEGData[-1] <= start + steps * 13):
-            aktuelleNote = 70
-        elif """(medianData[-1] <= start+steps*7)""":
-            aktuelleNote = 72
-
-        msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
+            aktuelleNote = 27 + 12
+            msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
+        else:
+            aktuelleNote = 28 + 12
+            msg = mido.Message('note_on', note=aktuelleNote, velocity=velocity)
 
         print(aktuelleNote)
         print(medianEEGData[-1])
         print(gyroData[-1])
-        print("velocity: %d"%velocity)
         # print(velocity)
-
-        if(gyro==True):
-            if (gyroData[-1][1] < -4 or gyroData[-1][1] > 5):
-                port.send(msg)
-                time.sleep(1)
-
-        elif(gyro == False):
+        if (gyroData[-1][1] < -4 or gyroData[-1][1] > 5):
             port.send(msg)
-            time.sleep(1)
+            notes.append(aktuelleNote)
 
+            if len(notes) >= 3 and notes[-2] != aktuelleNote:
+                msg = mido.Message('note_off', note=int(notes[-2]))
+                port.send(msg)
