@@ -5,6 +5,8 @@ Installation:
 2. Install loopMidi: http://www.tobias-erichsen.de/software/loopmidi.html
 3. Open loopMidi, create Port called "loopMIDI Port"
 
+If problems with mido library use: pip install python-rtmidi
+
 To Run:
 1. Start blueMuse, connect with Muse headband, start Stream
 2. Start loopMidi
